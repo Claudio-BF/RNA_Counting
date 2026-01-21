@@ -55,11 +55,11 @@ def calulate_inclusion(gene_dict):
             for j in range(i + 1, len(values)):
                 if values[j] >= minimum:
                     current_total += values[j]
-                if current_total >= max_total:
-                    current_total -= values[j]
-                    break
-                else:
-                    other_genes.append(keys[j])
+                    if current_total >= max_total:
+                        current_total -= values[j]
+                        break
+                    else:
+                        other_genes.append(keys[j])
             print(
                 f"You might also include the following genes, at which point {min_gene} is projected to have {minimum * grand_total / current_total:.2f} reads"
             )
