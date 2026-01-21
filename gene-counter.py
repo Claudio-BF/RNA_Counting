@@ -6,7 +6,7 @@ from itertools import accumulate
 # Constants
 GENE_LIST_PATH = "./data/pca-circadian-filtering-top-genes-ensdargID.txt"
 DATA_PATH = "./data/all_sample_reads.csv"
-MIN_READS = 10
+MIN_READS = 3000
 
 # reads all the gene names in GENE_LIST_PATH, priority is the order that the first instance appears.
 # Tries to add genes in order of priority, conditional on every gene in the list being predicted atleast MIN_READS reads.
@@ -24,10 +24,9 @@ def try_int(value):
         return 0
 
 
-def calulate_inclusion(gene_dict):
+def calulate_inclusion(gene_dict, grand_total):
     items = list(gene_dict.items())
     keys, values = zip(*items)
-    grand_total = sum(values)
     current_total = 0
     min_gene = keys[0]
     minimum = values[0]
@@ -58,13 +57,19 @@ def process_gene_data(gene_list, csv_path):
 
     with open(csv_path, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
+        grand_total = 0
+        num_genes = 0
         for row in reader:
             gene_id = row.get("geneID")
+            total = sum(try_int(v) for k, v in row.items() if k != "geneID")
+            grand_total += total
+            num_genes += 1
             if gene_id in results:
                 total = sum(try_int(v) for k, v in row.items() if k != "geneID")
                 results[gene_id] = total
                 found_genes.add(gene_id)
-    calulate_inclusion(results)
+    print(f"There are a total of {grand_total} reads accross all {num_genes} genes")
+    calulate_inclusion(results, grand_total)
 
 
 if __name__ == "__main__":
