@@ -31,12 +31,11 @@ def calulate_inclusion(gene_dict):
     current_total = 0
     min_gene = keys[0]
     minimum = values[0]
-    genes = []
-    counts = []
+    genes, counts = [], []
     for gene_id, total in gene_dict.items():
         current_total += total
         new_min = min(minimum, total)
-        if new_min * (grand_total / current_total) >= 10:
+        if new_min * (grand_total / current_total) >= MIN_READS:
             genes.append(gene_id)
             counts.append(total)
             if total <= minimum:
