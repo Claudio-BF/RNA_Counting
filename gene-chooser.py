@@ -8,7 +8,7 @@ import pandas as pd
 GENE_LIST_PATH = "./data/pca-circadian-filtering-top-genes-ensdargID.txt"
 DATA_PATH = "./data/all_sample_reads.csv"
 TOTAL_READS = 1000000
-MIN_READS = 30000
+MIN_READS = 10
 
 # reads all the gene names in GENE_LIST_PATH, priority is the order that the first instance appears.
 # Tries to add genes in order of priority, conditional on every gene in the list being predicted atleast MIN_READS reads.
