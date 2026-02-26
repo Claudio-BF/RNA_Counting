@@ -5,7 +5,7 @@ import os
 
 # Configuration
 DATA_PATH = "./data/all_sample_reads.csv"
-CPM_BUDGET = 50000
+CPM_BUDGET = 5000
 MIN_TOTAL_READS = 100
 N_RANGE = range(1, 200, 1)
 
@@ -85,6 +85,14 @@ def evaluate_quality(selected_genes, log_cpm):
     return log_cpm.loc[selected_genes].mean(axis=0).std()
 
 
+def evaluate_quality_linear(selected_genes, counts, library_sizes):
+    if len(selected_genes) == 0:
+        return float("inf")
+    aggregate_counts = counts.loc[selected_genes].sum(axis=0)
+    aggregate_cpm = (aggregate_counts / library_sizes) * 1_000_000
+    return aggregate_cpm.std() / aggregate_cpm.mean()
+
+
 def calculate_extrapolation_error(
     selected_genes, selected_stats, counts, library_sizes
 ):
@@ -96,13 +104,12 @@ def calculate_extrapolation_error(
     return diff_pct.abs().mean(), diff_pct, extrapolated_totals
 
 
-# def calculate_extrapolation_error_linear(
-#     selected_genes, selected_stats, counts, library_sizes
-# ):
-#     sums = counts.sum(axis=0)
-#     total = np.mean(sums)
-#     extrapolated_totals = (sample_gm_raw / ref_gm_cpm) * 1_000_000
-#     return diff_pct.abs().mean(), diff_pct, extrapolated_totals
+def calculate_extrapolation_error_linear(selected_genes, counts, library_sizes):
+    aggregate_counts = counts.loc[selected_genes].sum(axis=0)
+    avg_aggregate_cpm = (aggregate_counts / library_sizes).mean() * 1_000_000
+    extrapolated_totals = (aggregate_counts / avg_aggregate_cpm) * 1_000_000
+    diff_pct = (extrapolated_totals - library_sizes) / library_sizes * 100
+    return diff_pct.abs().mean(), diff_pct, extrapolated_totals
 
 
 def main():
@@ -121,10 +128,16 @@ def main():
             stats, n, CPM_BUDGET, alpha=ALPHA
         )
 
-        quality = evaluate_quality(selected_genes, log_cpm)
-        error, _, _ = calculate_extrapolation_error(
-            selected_genes, selected_stats, counts, library_sizes
+        # quality = evaluate_quality_linear(selected_genes, log_cpm)
+        # error, _, _ = calculate_extrapolation_error_linear(
+        #     selected_genes, selected_stats, counts, library_sizes
+        # )
+
+        quality = evaluate_quality_linear(selected_genes, counts, library_sizes)
+        error, _, _ = calculate_extrapolation_error_linear(
+            selected_genes, counts, library_sizes
         )
+
         results.append((n, quality, error))
 
     res_df = pd.DataFrame(results, columns=["n", "quality", "error"])
@@ -136,9 +149,13 @@ def main():
         stats, best_n, CPM_BUDGET, alpha=ALPHA
     )
 
-    final_quality = evaluate_quality(final_genes, log_cpm)
-    final_error, _, _ = calculate_extrapolation_error(
-        final_genes, final_stats, counts, library_sizes
+    # final_quality = evaluate_quality(final_genes, log_cpm)
+    # final_error, _, _ = calculate_extrapolation_error(
+    #     final_genes, final_stats, counts, library_sizes
+    # )
+    final_quality = evaluate_quality_linear(final_genes, counts, library_sizes)
+    final_error, _, _ = calculate_extrapolation_error_linear(
+        final_genes, counts, library_sizes
     )
 
     print(f"\n====== Final Selection Results (n={best_n}) ======")
